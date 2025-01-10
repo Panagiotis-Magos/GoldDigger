@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
@@ -18,7 +19,6 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
-    // Get the path to the database
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'golddigger.db');
 
@@ -26,12 +26,12 @@ class DatabaseService {
     final exists = await databaseExists(path);
 
     if (!exists) {
-      // Load the SQL schema from the assets folder
-      String sqlScript = await rootBundle.loadString('assets/database/goaldigger_schema.sql');
+      // Load SQL schema from assets
+      String schema = await rootBundle.loadString('assets/database/goaldigger_schema.sql');
 
-      // Open the database and execute the schema
+      // Open or create the database
       final db = await openDatabase(path, version: 1, onCreate: (db, version) async {
-        List<String> commands = sqlScript.split(';');
+        List<String> commands = schema.split(';');
         for (String command in commands) {
           if (command.trim().isNotEmpty) {
             await db.execute(command);
@@ -41,20 +41,7 @@ class DatabaseService {
 
       return db;
     } else {
-      // Open the existing database
       return openDatabase(path);
     }
-  }
-
-  // Example: Insert a task
-  Future<int> insertTask(Map<String, dynamic> task) async {
-    final db = await database;
-    return db.insert('tasks', task);
-  }
-
-  // Example: Get all tasks
-  Future<List<Map<String, dynamic>>> getTasks() async {
-    final db = await database;
-    return db.query('tasks');
   }
 }
