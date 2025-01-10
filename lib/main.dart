@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import './routes/app_routes.dart';
 import 'utils/theme.dart';
+import 'utils/database_helper.dart'; 
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseHelper.instance.database; 
   runApp(GoldDiggerApp());
 }
 
