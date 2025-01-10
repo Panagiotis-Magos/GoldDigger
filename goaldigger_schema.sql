@@ -31,7 +31,6 @@ CREATE TABLE `goals` (
   `category` varchar(20) NOT NULL,
   `description` text,
   `target` int NOT NULL DEFAULT '0',
-  `tasks_completed` int DEFAULT '0',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`goal_id`),
   KEY `idx_goals_title` (`title`)
@@ -70,8 +69,10 @@ CREATE TABLE `items` (
   `description` text,
   `type` varchar(50) DEFAULT NULL,
   `price` int NOT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`item_id`)
+  `photo_id` int not null,
+  PRIMARY KEY (`item_id`),
+  KEY (`photo_id`),
+  CONSTRAINT `items_1` FOREIGN KEY (`photo_id`) REFERENCES `photos` (`photo_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -89,12 +90,10 @@ CREATE TABLE `photos` (
   `url` text NOT NULL,
   `uploaded_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`photo_id`),
-  KEY `user_id` (`user_id`),
-  KEY `task_id` (`task_id`),
-  KEY `goal_id` (`goal_id`),
+  KEY(`user_id`),
+  KEY(`task_id`),
   CONSTRAINT `photos_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `photos_ibfk_2` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`task_id`),
-  CONSTRAINT `photos_ibfk_3` FOREIGN KEY (`goal_id`) REFERENCES `goals` (`goal_id`)
+  CONSTRAINT `photos_ibfk_2` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`task_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -111,72 +110,11 @@ CREATE TABLE `tasks` (
   `category` varchar(50) NOT NULL,
   `description` text,
   `gold_reward` int DEFAULT NULL,
-  `photo` text,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`task_id`),
   KEY `idx_tasks_title` (`title`),
   KEY `idx_tasks_category` (`category`),
   FULLTEXT KEY `title` (`title`,`description`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `usercompletedgoals`
---
-
-DROP TABLE IF EXISTS `usercompletedgoals`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `usercompletedgoals` (
-  `completed_goal_id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `goal_id` int NOT NULL,
-  `completed_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`completed_goal_id`),
-  KEY `user_id` (`user_id`),
-  KEY `goal_id` (`goal_id`),
-  CONSTRAINT `usercompletedgoals_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `usercompletedgoals_ibfk_2` FOREIGN KEY (`goal_id`) REFERENCES `goals` (`goal_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `usercompletedtasks`
---
-
-DROP TABLE IF EXISTS `usercompletedtasks`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `usercompletedtasks` (
-  `completed_task_id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `task_id` int NOT NULL,
-  `completed_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`completed_task_id`),
-  KEY `user_id` (`user_id`),
-  KEY `task_id` (`task_id`),
-  CONSTRAINT `usercompletedtasks_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `usercompletedtasks_ibfk_2` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`task_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `userequippeditems`
---
-
-DROP TABLE IF EXISTS `userequippeditems`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `userequippeditems` (
-  `equipped_item_id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `item_id` int NOT NULL,
-  `is_equipped` tinyint(1) DEFAULT '1',
-  PRIMARY KEY (`equipped_item_id`),
-  KEY `user_id` (`user_id`),
-  KEY `item_id` (`item_id`),
-  CONSTRAINT `userequippeditems_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `userequippeditems_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -188,13 +126,12 @@ DROP TABLE IF EXISTS `usergoals`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `usergoals` (
-  `user_goal_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `goal_id` int NOT NULL,
   `progress` int DEFAULT '0',
   `is_completed` tinyint(1) DEFAULT '0',
   `completed_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`user_goal_id`),
+  PRIMARY KEY (`user_id`, `goal_id`),
   KEY `user_id` (`user_id`),
   KEY `goal_id` (`goal_id`),
   CONSTRAINT `usergoals_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
@@ -202,25 +139,6 @@ CREATE TABLE `usergoals` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `userinprogressgoals`
---
-
-DROP TABLE IF EXISTS `userinprogressgoals`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `userinprogressgoals` (
-  `in_progress_goal_id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `goal_id` int NOT NULL,
-  `progress` int DEFAULT '0',
-  PRIMARY KEY (`in_progress_goal_id`),
-  KEY `user_id` (`user_id`),
-  KEY `goal_id` (`goal_id`),
-  CONSTRAINT `userinprogressgoals_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `userinprogressgoals_ibfk_2` FOREIGN KEY (`goal_id`) REFERENCES `goals` (`goal_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `useritems`
@@ -230,10 +148,10 @@ DROP TABLE IF EXISTS `useritems`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `useritems` (
-  `user_item_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `item_id` int NOT NULL,
-  PRIMARY KEY (`user_item_id`),
+  `is_equipped` tinyint(1) default '0',
+  PRIMARY KEY (`user_id`, `item_id`),
   KEY `user_id` (`user_id`),
   KEY `item_id` (`item_id`),
   CONSTRAINT `useritems_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
@@ -253,7 +171,6 @@ CREATE TABLE `users` (
   `username` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `profile_photo` text,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `email` (`email`)
@@ -268,12 +185,11 @@ DROP TABLE IF EXISTS `usertasks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `usertasks` (
-  `user_task_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `task_id` int NOT NULL,
   `is_completed` tinyint(1) DEFAULT '0',
   `completed_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`user_task_id`),
+  PRIMARY KEY (`user_id`,`task_id`),
   KEY `user_id` (`user_id`),
   KEY `task_id` (`task_id`),
   CONSTRAINT `usertasks_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
