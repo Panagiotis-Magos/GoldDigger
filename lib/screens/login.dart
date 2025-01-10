@@ -50,7 +50,7 @@ class LoginScreen extends StatelessWidget {
               // Login Button
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/home');
+                  Navigator.pushReplacementNamed(context, '/profile');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.amber,
