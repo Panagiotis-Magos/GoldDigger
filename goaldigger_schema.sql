@@ -1,3 +1,4 @@
+Drop database if exists `goaldigger`;
 CREATE DATABASE  IF NOT EXISTS `goaldigger` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `goaldigger`;
 -- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
@@ -85,7 +86,6 @@ CREATE TABLE `photos` (
   `photo_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int DEFAULT NULL,
   `task_id` int DEFAULT NULL,
-  `goal_id` int DEFAULT NULL,
   `url` text NOT NULL,
   `uploaded_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`photo_id`),
