@@ -56,19 +56,21 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
     uses-material-design: true
-    platforms:
-    android:
-      enabled: true
-    ios:
-      enabled: false
-    web:
-      enabled: false
-    windows:
-      enabled: false
-    macos:
-      enabled: false
-    linux:
-      enabled: false
+
+    #chat told me to add this but its useless
+    #platforms:
+    #android:
+    #  enabled: true
+    #ios:
+    # enabled: false
+    #web:
+    #  enabled: false
+    #windows:
+    #  enabled: false
+    #macos:
+    #  enabled: false
+    #linux:
+    #  enabled: false
 
   # To add assets to your application, add an assets section, like this:
   # assets:
