@@ -81,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '@$username',
+                      '@$username (User ID: ${widget.userId})',
                       style: const TextStyle(
                         fontSize: 20,
                         color: Colors.white,
