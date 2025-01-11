@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import '../services/database_service.dart';
+import '../utils/appstate.dart';
 
 class EditProfileScreen extends StatefulWidget {
+  final int userId; // Ο χρήστης που θέλουμε να επεξεργαστούμε
+
+  const EditProfileScreen({Key? key, required this.userId}) : super(key: key);
+
   @override
   _EditProfileScreenState createState() => _EditProfileScreenState();
 }
@@ -9,24 +15,90 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  void _updateUsername() {
-    final newUsername = usernameController.text;
-    // Logic to update username in database
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Username updated to $newUsername!')),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
   }
 
-  void _updatePassword() {
+  Future<void> _loadUserData() async {
+    try {
+      final db = await DatabaseService().database;
+      final user = await db.query(
+        'users',
+        where: 'user_id = ?',
+        whereArgs: [widget.userId],
+      );
+
+      if (user.isNotEmpty) {
+        setState(() {
+          usernameController.text = user.first['username'] as String? ?? '';
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load user data: $e')),
+      );
+    }
+  }
+
+  Future<void> _updateUsername() async {
+    final newUsername = usernameController.text;
+    if (newUsername.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username cannot be empty!')),
+      );
+      return;
+    }
+
+    try {
+      final db = await DatabaseService().database;
+      await db.update(
+        'users',
+        {'username': newUsername},
+        where: 'user_id = ?',
+        whereArgs: [widget.userId],
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Username updated to $newUsername!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update username: $e')),
+      );
+    }
+  }
+
+  Future<void> _updatePassword() async {
     final newPassword = passwordController.text;
-    // Logic to update password in database
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Password updated successfully!')),
-    );
+    if (newPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password cannot be empty!')),
+      );
+      return;
+    }
+
+    try {
+      final db = await DatabaseService().database;
+      await db.update(
+        'users',
+        {'password': newPassword},
+        where: 'user_id = ?',
+        whereArgs: [widget.userId],
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password updated successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update password: $e')),
+      );
+    }
   }
 
   void _logout() {
-    // Logic to log out the user
     Navigator.pushReplacementNamed(context, '/login');
   }
 
@@ -43,15 +115,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         centerTitle: true,
       ),
       body: Container(
-        color: const Color(0xFF333333), // Dark gray background
+        color: const Color(0xFF333333),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // "My Stuff" Button
             ElevatedButton(
               onPressed: () {
-                Navigator.pushReplacementNamed(context, '/mystuff'); // Navigate to My Stuff
+                Navigator.pushReplacementNamed(context, '/mystuff');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey[600],
@@ -66,8 +137,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Change Name Section
             const Text(
               'Change name',
               style: TextStyle(color: Colors.amber, fontSize: 16),
@@ -80,7 +149,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 hintText: '@username',
-                hintStyle: const TextStyle(color: Colors.white70),
                 filled: true,
                 fillColor: Colors.grey[600],
               ),
@@ -96,11 +164,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Update Name',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+              child: const Text('Update Name'),
             ),
+            const SizedBox(height: 20),
             const Text(
               'Change password',
               style: TextStyle(color: Colors.amber, fontSize: 16),
@@ -114,7 +180,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 hintText: 'New password',
-                hintStyle: const TextStyle(color: Colors.white70),
                 filled: true,
                 fillColor: Colors.grey[600],
               ),
@@ -130,14 +195,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Update Password',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+              child: const Text('Update Password'),
             ),
             const Spacer(),
-
-            // "Log Out" Button
             ElevatedButton(
               onPressed: _logout,
               style: ElevatedButton.styleFrom(
@@ -147,47 +207,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Log Out',
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Footer Message
-            const Text(
-              'You joined 1 year ago',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+              child: const Text('Log Out'),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2, // Profile tab is selected
-        selectedItemColor: Colors.amber,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              _navigateTo('/search');
-              break;
-            case 1:
-              _navigateTo('/home');
-              break;
-            case 2:
-              break;
-            case 3:
-              _navigateTo('/shop');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
-        ],
-      ),
     );
   }
 }
+
+
