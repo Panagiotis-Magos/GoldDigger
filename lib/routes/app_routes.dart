@@ -11,7 +11,7 @@ class AppRoutes {
   static const String editprofile = '/editprofile';
   static const String intro = '/';
   static const String profile = '/profile';
-
+  static const String mystuff = '/mystuff';
   static final Map<String, WidgetBuilder> routes = {
     home: (context) => Scaffold(
             appBar: AppBar(

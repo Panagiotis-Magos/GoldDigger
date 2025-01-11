@@ -19,29 +19,45 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'golddigger.db');
+  final dbPath = await getDatabasesPath();
+  final path = join(dbPath, 'golddigger.db');
 
-    // Check if the database already exists
-    final exists = await databaseExists(path);
+  // Check if the database already exists
+  final exists = await databaseExists(path);
 
-    if (!exists) {
-      // Load SQL schema from assets
-      String schema = await rootBundle.loadString('assets/database/goaldigger_schema.sql');
+  if (!exists) {
+    print('Database does not exist. Creating it now.');
 
-      // Open or create the database
-      final db = await openDatabase(path, version: 1, onCreate: (db, version) async {
-        List<String> commands = schema.split(';');
-        for (String command in commands) {
-          if (command.trim().isNotEmpty) {
-            await db.execute(command);
-          }
+    // Load SQL schema from assets
+    final schema = await rootBundle.loadString('assets/database/goaldigger_schema.sql');
+    print('Loaded schema: $schema');
+
+    // Open or create the database
+    final db = await openDatabase(path, version: 1, onCreate: (db, version) async {
+      List<String> commands = schema.split(';');
+      for (String command in commands) {
+        if (command.trim().isNotEmpty) {
+          print('Executing command: $command');
+          await db.execute(command);
         }
-      });
+      }
+    });
+    // Query for tables in the database
+    final tables = await db.rawQuery("SELECT * FROM sqlite_master WHERE type='table'");
+    print('Tables in the database: $tables');
 
-      return db;
-    } else {
-      return openDatabase(path);
+    return db;
+  } else {
+      print('Database already exists at $path.');
+      // Open the database
+      final db = await openDatabase(path);
+
+      // Query for tables in the database
+      final tables = await db.rawQuery("SELECT * FROM sqlite_master WHERE type='table'");
+      print('Tables in the database: $tables');
+
+    return db;
     }
   }
 }
+

@@ -22,32 +22,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserData() async {
-    final db = await DatabaseService().database;
+    try {
+      final db = await DatabaseService().database;
 
-    // Fetch user data
-    final userResult = await db.query(
-      'users',
-      where: 'user_id = ?',
-      whereArgs: [widget.userId],
-    );
+      // Fetch user data
+      final userResult = await db.query(
+        'users',
+        where: 'user_id = ?',
+        whereArgs: [widget.userId],
+      );
 
-    if (userResult.isNotEmpty) {
+      print('User result: $userResult'); // Debug: Check user query result
+
+      if (userResult.isNotEmpty) {
+        setState(() {
+          username = userResult[0]['username'] as String;
+          totalPoints = userResult[0]['gold'] as int;
+        });
+      } else {
+        print('No user found for userId: ${widget.userId}');
+      }
+
+      // Fetch user's photos
+      final photosResult = await db.query(
+        'photos',
+        where: 'user_id = ?',
+        whereArgs: [widget.userId],
+      );
+
+      print('Photos result: $photosResult'); // Debug: Check photos query result
+
       setState(() {
-        username = userResult[0]['username'] as String;
-        totalPoints = userResult[0]['gold'] as int;
+        libraryPhotos = photosResult.map((photo) => photo['url'] as String).toList();
       });
+    } catch (e) {
+      print('Error loading user data: $e');
     }
-
-    // Fetch user's photos
-    final photosResult = await db.query(
-      'photos',
-      where: 'user_id = ?',
-      whereArgs: [widget.userId],
-    );
-
-    setState(() {
-      libraryPhotos = photosResult.map((photo) => photo['url'] as String).toList();
-    });
   }
 
   void _navigateTo(String route) {
@@ -172,7 +182,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
         ],
       ),
