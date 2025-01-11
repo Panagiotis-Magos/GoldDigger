@@ -101,9 +101,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Change Password Section
             const Text(
               'Change password',
               style: TextStyle(color: Colors.amber, fontSize: 16),

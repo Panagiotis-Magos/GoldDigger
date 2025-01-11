@@ -15,28 +15,11 @@ Future<void> clearDatabase() async {
   print('Database deleted.');
 }
 
-Future<void> checkSQLiteVersion() async {
-  // Open your database
-  final dbPath = await getDatabasesPath();
-  final path = "$dbPath/golddigger.db";
-
-  final database = await openDatabase(path);
-
-  // Run the query to get the SQLite version
-  final result = await database.rawQuery("SELECT sqlite_version() AS version");
-  final version = result.first['version'];
-  print("SQLite Version: $version");
-
-  // Close the database
-  await database.close();
-}
-
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   // Clear database for development/testing purposes
-  //await clearDatabase();
-  await checkSQLiteVersion();
+  await clearDatabase();
   final dbService = DatabaseService();
   await dbService.database; // Ensure the database is initialized
   runApp(GoldDiggerApp());
