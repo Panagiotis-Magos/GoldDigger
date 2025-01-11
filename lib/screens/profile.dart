@@ -173,8 +173,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _navigateTo('/home');
               break;
             case 2:
-              break;
-            case 3:
               _navigateTo('/shop');
               break;
           }
