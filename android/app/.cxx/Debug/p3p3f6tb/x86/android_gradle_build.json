@@ -1,0 +1,28 @@
+{
+  "buildFiles": [
+    "/home/pmagos/flut/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/pmagos/Android/Sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/pmagos/Documents/interaction/golddigger/android/app/.cxx/Debug/p3p3f6tb/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/pmagos/Android/Sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/pmagos/Documents/interaction/golddigger/android/app/.cxx/Debug/p3p3f6tb/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {},
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/home/pmagos/Android/Sdk/ndk/28.0.12674087/toolchains/llvm/prebuilt/linux-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/home/pmagos/Android/Sdk/ndk/28.0.12674087/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": []
+}

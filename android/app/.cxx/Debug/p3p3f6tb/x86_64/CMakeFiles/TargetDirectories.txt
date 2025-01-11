@@ -1,0 +1,2 @@
+/home/pmagos/Documents/interaction/golddigger/android/app/.cxx/Debug/p3p3f6tb/x86_64/CMakeFiles/edit_cache.dir
+/home/pmagos/Documents/interaction/golddigger/android/app/.cxx/Debug/p3p3f6tb/x86_64/CMakeFiles/rebuild_cache.dir

@@ -51,7 +51,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // "My Stuff" Button
             ElevatedButton(
               onPressed: () {
-                _navigateTo('/mystuff'); // Navigate to My Stuff
+                Navigator.pushReplacementNamed(context, '/mystuff'); // Navigate to My Stuff
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey[600],
@@ -101,9 +101,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Change Password Section
             const Text(
               'Change password',
               style: TextStyle(color: Colors.amber, fontSize: 16),
@@ -188,7 +185,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
         ],
       ),
