@@ -72,9 +72,21 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         whereArgs: [widget.userId, widget.taskId],
       );
 
+      // Πρόσθεση των χρημάτων στον χρήστη
+      final goldReward = taskDetails!['gold_reward'] as int;
+      await db.rawUpdate('''
+        UPDATE users
+        SET gold = gold + ?
+        WHERE user_id = ?
+      ''', [goldReward, widget.userId]);
+
       setState(() {
         taskCompleted = true; // Ενημερώνουμε την κατάσταση του task
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Task completed! You earned $goldReward gold!')),
+      );
     } catch (e) {
       print('Error completing task: $e');
       ScaffoldMessenger.of(context).showSnackBar(
