@@ -191,15 +191,20 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
+     bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2, // shop is selected
         selectedItemColor: Colors.amber,
         unselectedItemColor: Colors.grey,
-        currentIndex: 2,
         onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/search');
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/home');
+          switch (index) {
+            case 0:
+              Navigator.pushReplacementNamed(context, '/searchscreen');
+              break;
+            case 1:
+              Navigator.pushReplacementNamed(context, '/home');
+              break;
+            case 2:
+              break;
           }
         },
         items: const [
