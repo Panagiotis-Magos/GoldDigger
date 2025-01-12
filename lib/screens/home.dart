@@ -114,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final db = await DatabaseService().database;
 
       // Fetch tasks using a join query
+
       final taskResult = await db.rawQuery('''
         SELECT tasks.*, usertasks.is_completed
         FROM usertasks
@@ -134,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final db = await DatabaseService().database;
 
       // Fetch goals using a join query
+
       final goalsResult = await db.rawQuery('''
         SELECT goals.*, usergoals.is_completed,usergoals.progress
         FROM usergoals
@@ -173,7 +175,6 @@ Future<void> _loadProgress() async {
     */
     setState(() {
       progress = progressResult; // Store the graphable data
-      print(progress);
     });
   } catch (e) {
     print('Error loading progress: $e');
@@ -200,21 +201,22 @@ List<Map<String, dynamic>> get filterProgressData {
 
   if (selectedProgressCategory == 'Month') {
     // Filter for the last 4 weeks
-    print(now);
+    //print(now);
     final fourWeeksAgo = now.subtract(Duration(days: 28));
-    print(fourWeeksAgo);
+    //print(fourWeeksAgo);
+    //print("just before processing-getter");
     return processProgressData(progress.where((entry) {
       final dateStr = entry['completed_at'];
       if (dateStr == null) return false; // Skip null dates
       final date = DateTime.tryParse(dateStr);
       bool check = date != null && date.isAfter(fourWeeksAgo) && date.isBefore(now);
-      print("$dateStr, $check");
+      //print("$dateStr, $check");
       return date != null && date.isAfter(fourWeeksAgo) && date.isBefore(now);
     }).toList());
   } else if (selectedProgressCategory == 'Year') {
     // Filter for the last 52 weeks
     final oneYearAgo = now.subtract(Duration(days: 365));
-    print(oneYearAgo);
+    //print(oneYearAgo);
     return processProgressData(progress.where((entry) {
       final dateStr = entry['completed_at'];
       if (dateStr == null) return false; // Skip null dates
@@ -223,6 +225,7 @@ List<Map<String, dynamic>> get filterProgressData {
     }).toList());
   } else {
     // Show all progress data
+    //print("just before processing-getter");
     return processProgressData(progress);
   }
 }
@@ -508,7 +511,11 @@ Widget _buildProgressGraph() {
 
 List<Map<String, dynamic>> processProgressData(List<Map<String, dynamic>> progress) {
   // Parse the timestamps and count tasks per week
+  //print("just started processing-processor");
   Map<int, int> weeklyCounts = {};
+  if (progress.isEmpty) {
+  return []; // Return an empty list if there's no data to process
+}
   DateTime earliest= DateTime.parse(progress[0]['completed_at']);
   for (var entry in progress){
     if (entry['completed_at'] != null) {
