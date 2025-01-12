@@ -349,7 +349,12 @@ List<Map<String, dynamic>> get filterProgressData {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('${task['gold_reward']}', style: const TextStyle(color: Colors.amber)),
-                const Icon(Icons.star, color: Colors.amber),
+                const SizedBox(width: 5),
+                Image.asset(
+                  'assets/images/gold_bar.png', // Gold bar image
+                  height: 25,
+                  width: 25
+                  ),
               ],
             ),
           ),
@@ -410,7 +415,12 @@ List<Map<String, dynamic>> get filterProgressData {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('${goal['reward']}', style: const TextStyle(color: Colors.amber)),
-                const Icon(Icons.star, color: Colors.amber),
+                const SizedBox(width: 5),
+                Image.asset(
+                  'assets/images/gold_bar.png', // Gold bar image
+                  height: 25,
+                  width: 25
+                  ),
               ],
             ),
           ),
