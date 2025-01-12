@@ -38,4 +38,3 @@ class GoldDiggerApp extends StatelessWidget {
     );
   }
 }
-

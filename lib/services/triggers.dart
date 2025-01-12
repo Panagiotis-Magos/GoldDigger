@@ -1,133 +1,94 @@
-import 'package:sqflite/sqflite.dart'; // For SQLite operations
-import 'package:path/path.dart';       // For building database file paths
-import 'dart:async';                  // Optional, for async/await and streams
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
-//If we dont have the user making goals these are not needed
+class DatabaseService {
+  static final DatabaseService _instance = DatabaseService._();
+  static Database? _database;
 
-/*Future<void> afterGoaltaskInsert(Database db, int goalId) async {
-  await db.rawUpdate(
-    'UPDATE goals SET target = target + 1 WHERE goal_id = ?',
-    [goalId],
-  );
-}
+  DatabaseService._();
 
-Future<void> afterGoaltaskDelete(Database db, int goalId) async {
-  await db.rawUpdate(
-    'UPDATE goals SET target = target - 1 WHERE goal_id = ?',
-    [goalId],
-  );
-} */
+  factory DatabaseService() => _instance;
 
-//Trigger for when a user adds a goal
-
-Future<void> afterUsergoalInsert(Database db, int userId, int goalId) async {
-  await db.rawInsert('''
-    INSERT INTO usertasks (user_id, task_id, is_completed, completed_at)
-    SELECT ?, gt.task_id, 0, NULL
-    FROM goaltask gt
-    WHERE gt.goal_id = ?
-      AND NOT EXISTS (
-        SELECT 1 FROM usertasks ut
-        WHERE ut.user_id = ? AND ut.task_id = gt.task_id
-      )
-  ''', [userId, goalId, userId]);
-}
-
-//For timestamp in goals
-
-Future<void> beforeGoalUpdate(Database db, Map<String, dynamic> newGoal, Map<String, dynamic> oldGoal) async {
-  if (newGoal['is_completed'] == 1 && oldGoal['is_completed'] == 0) {
-    newGoal['completed_at'] = DateTime.now().toIso8601String();
-  } else if (newGoal['is_completed'] == 0) {
-    newGoal['completed_at'] = null;
-  }
-}
-
-Future<void> takePayment(Database db, int userId, int itemId) async {
-  final userGold = Sqflite.firstIntValue(await db.rawQuery(
-    'SELECT gold FROM users WHERE user_id = ?',
-    [userId],
-  ));
-  final itemPrice = Sqflite.firstIntValue(await db.rawQuery(
-    'SELECT price FROM items WHERE item_id = ?',
-    [itemId],
-  ));
-
-  if (userGold == null || itemPrice == null || userGold < itemPrice) {
-    throw Exception('Not enough gold to purchase this item');
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDatabase();
+    return _database!;
   }
 
-  await db.rawUpdate(
-    'UPDATE users SET gold = gold - ? WHERE user_id = ?',
-    [itemPrice, userId],
-  );
+  Future<Database> _initDatabase() async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'golddigger.db');
 
-  await db.insert('useritems', {'user_id': userId, 'item_id': itemId});
-}
+    // Check if the database already exists
+    final exists = await databaseExists(path);
 
-Future<void> beforeTaskUpdate(Database db, Map<String, dynamic> newTask, Map<String, dynamic> oldTask) async {
-  if (newTask['is_completed'] == 1 && oldTask['is_completed'] == 0) {
-    newTask['completed_at'] = DateTime.now().toIso8601String();
-  } else if (newTask['is_completed'] == 0) {
-    newTask['completed_at'] = null;
+    if (!exists) {
+      print('Database does not exist. Creating it now.');
+
+      // Load SQL schema from assets
+      final schema =
+          await rootBundle.loadString('assets/database/goaldigger_schema.sql');
+      print('Loaded schema: $schema');
+
+      // Open or create the database
+      final db = await openDatabase(path, version: 1, onCreate: (db, version) async {
+        List<String> commands = schema.split(';');
+        for (String command in commands) {
+          if (command.trim().isNotEmpty) {
+            print('Executing command: $command');
+            await db.execute(command);
+          }
+        }
+      });
+
+      // Query for tables in the database
+      final tables =
+          await db.rawQuery("SELECT * FROM sqlite_master WHERE type='table'");
+      print('Tables in the database: $tables');
+
+      return db;
+    } else {
+      print('Database already exists at $path.');
+      // Open the database
+      final db = await openDatabase(path);
+
+      // Check if `photo_decision` column exists in `usertasks` table
+      await _checkAndUpdateDatabaseSchema(db);
+
+      // Query for tables in the database
+      final tables =
+          await db.rawQuery("SELECT * FROM sqlite_master WHERE type='table'");
+      print('Tables in the database: $tables');
+
+      return db;
+    }
   }
-}
 
-Future<void> taskIncomplete(Database db, int userId, int taskId) async {
-  await db.rawUpdate('''
-    UPDATE usergoals
-    SET progress = progress - 1
-    WHERE user_id = ?
-      AND goal_id IN (
-        SELECT goal_id FROM goaltask WHERE task_id = ?
-      )
-  ''', [userId, taskId]);
-}
+  Future<void> _checkAndUpdateDatabaseSchema(Database db) async {
+    try {
+      // Check if the 'photo_decision' column exists
+      final result = await db.rawQuery(
+          "PRAGMA table_info(usertasks)");
+      final columnExists = result.any((column) => column['name'] == 'photo_decision');
 
+      if (!columnExists) {
+        print('Column `photo_decision` does not exist. Adding it now.');
 
+        // Add the `photo_decision` column
+        await db.execute('''
+          ALTER TABLE usertasks
+          ADD COLUMN photo_decision TEXT DEFAULT NULL;
+        ''');
 
-Future<void> taskCompletedUpdate(Database db, int userId, int taskId) async {
-  // Update user's gold
-  await db.rawUpdate('''
-    UPDATE users
-    SET gold = gold + (
-      SELECT gold_reward FROM tasks WHERE task_id = ?
-    )
-    WHERE user_id = ?
-  ''', [taskId, userId]);
-
-  // Increment progress for linked goals
-  await db.rawUpdate('''
-    UPDATE usergoals
-    SET progress = progress + 1
-    WHERE user_id = ?
-      AND goal_id IN (
-        SELECT goal_id FROM goaltask WHERE task_id = ?
-      )
-  ''', [userId, taskId]);
-
-  // Mark goals as completed if progress matches target
-  await db.rawUpdate('''
-    UPDATE usergoals
-    SET is_completed = 1, completed_at = ?
-    WHERE user_id = ?
-      AND goal_id IN (
-        SELECT goal_id FROM goals WHERE goal_id = usergoals.goal_id AND progress >= target
-      )
-      AND is_completed = 0
-  ''', [DateTime.now().toIso8601String(), userId]);
-
-  // Update user's gold with rewards from completed goals
-  await db.rawUpdate('''
-    UPDATE users
-    SET gold = gold + (
-      SELECT COALESCE(SUM(reward), 0)
-      FROM usergoals
-      JOIN goals ON usergoals.goal_id = goals.goal_id
-      WHERE usergoals.user_id = ?
-        AND usergoals.is_completed = 1
-        AND usergoals.completed_at = ?
-    )
-    WHERE user_id = ?
-  ''', [userId, DateTime.now().toIso8601String(), userId]);
+        print('Column `photo_decision` added successfully.');
+      } else {
+        print('Column `photo_decision` already exists.');
+      }
+    } catch (e) {
+      print('Error checking or updating database schema: $e');
+    }
+  }
 }

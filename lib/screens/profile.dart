@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   final int userId;
@@ -184,5 +186,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+}
+
+
+Widget _buildImage(String url) {
+  if (url.startsWith('assets')) {
+    // Load from assets
+    return Image.asset(url, fit: BoxFit.cover);
+  } else {
+    // Assume the file is stored locally (internal/external)
+    return Image.file(File(url), fit: BoxFit.cover);
   }
 }

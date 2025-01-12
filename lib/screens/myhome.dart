@@ -281,7 +281,7 @@ List<Map<String, dynamic>> get filterProgressData {
               Navigator.pushReplacementNamed(context, '/searchscreen');
               break;
             case 1:
-              Navigator.pushReplacementNamed(context, '/home');
+              //Navigator.pushReplacementNamed(context, '/home');
               break;
             case 2:
               Navigator.pushReplacementNamed(context, '/shop');
