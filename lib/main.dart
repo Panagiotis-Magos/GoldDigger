@@ -6,6 +6,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 
+
 Future<void> clearDatabase() async {
   final dbPath = await getDatabasesPath();
   final path = join(dbPath, 'golddigger.db');
@@ -19,7 +20,7 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   // Clear database for development/testing purposes
-  await clearDatabase();
+  //await clearDatabase();
   final dbService = DatabaseService();
   await dbService.database; // Ensure the database is initialized
   runApp(GoldDiggerApp());
@@ -37,6 +38,7 @@ class GoldDiggerApp extends StatelessWidget {
     );
   }
 }
+
 
 
 /*CREATE TRIGGER after_goaltask_insert
