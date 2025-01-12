@@ -19,7 +19,7 @@ class AppRoutes {
   static const String searchscreen = '/searchscreen';
   static const String shop = '/shop';
   static const String home = '/home';
-  static const String camera = '/camera';
+  //static const String camera = '/camera';
 
   static final Map<String, WidgetBuilder> routes = {
     intro: (context) => IntroScreen(),
@@ -30,6 +30,6 @@ class AppRoutes {
     searchscreen: (context) => SearchScreen(userId: AppState().globaluserId),
     home: (context) => HomeScreen(userId:AppState().globaluserId),
     shop: (context) => ShopScreen(userId: AppState().globaluserId),
-    camera: (context) => CameraScreen(), // Add the CameraScreen route
+    //camera: (context) => CameraScreen(), // Add the CameraScreen route
   };
 }

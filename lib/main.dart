@@ -20,7 +20,7 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   // Clear database for development/testing purposes
-  //await clearDatabase();
+  await clearDatabase();
   final dbService = DatabaseService();
   await dbService.database; // Ensure the database is initialized
   runApp(GoldDiggerApp());
