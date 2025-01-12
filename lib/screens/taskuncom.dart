@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:golddigger/screens/gpsscreen.dart';
 import '../services/database_service.dart';
 import 'camerascreen.dart';
 
@@ -73,9 +74,21 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   }
 
   Future<void> _completeTask() async {
-    try {
-      final db = await DatabaseService().database;
+  // Navigate to the GPS screen with taskId and userId
+  final locationVerified = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => GPSScreen(
+        userId: widget.userId,
+        taskId: widget.taskId,
+      ),
+    ),
+  );
 
+  if (locationVerified == true) {
+    try {
+      // Update the task as completed
+      final db = await DatabaseService().database;
       await db.update(
         'usertasks',
         {
@@ -86,20 +99,19 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         whereArgs: [widget.userId, widget.taskId],
       );
 
-      final goldReward = taskDetails!['gold_reward'] as int;
-      await db.rawUpdate('''
-        UPDATE users
-        SET gold = gold + ?
-        WHERE user_id = ?
-      ''', [goldReward, widget.userId]);
-
-      setState(() {
-        taskCompleted = true;
-        decisionPending = true;
-      });
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Task completed! You earned $goldReward gold!')),
+        SnackBar(content: Text('Task completed successfully!')),
+      );
+
+      // Refresh TaskDetailsScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TaskDetailsScreen(
+            userId: widget.userId,
+            taskId: widget.taskId,
+          ),
+        ),
       );
     } catch (e) {
       print('Error completing task: $e');
@@ -107,7 +119,14 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         SnackBar(content: Text('Failed to complete task: $e')),
       );
     }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Location verification failed.')),
+    );
   }
+}
+
+
 
   Future<void> _handlePhotoDecision(bool uploadPhoto) async {
     try {
