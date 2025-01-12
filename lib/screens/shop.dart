@@ -131,7 +131,12 @@ class _ShopScreenState extends State<ShopScreen> {
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                    const Icon(Icons.attach_money, color: Colors.black),
+                    const SizedBox(width: 8), // Μικρό κενό ανάμεσα στο κείμενο και την εικόνα
+                    Image.asset(
+                      'assets/images/gold_bar.png', // Διαδρομή της εικόνας
+                      width: 24, // Πλάτος εικόνας
+                      height: 24, // Ύψος εικόνας
+                    ),
                   ],
                 ),
               ],
@@ -178,12 +183,28 @@ class _ShopScreenState extends State<ShopScreen> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '${item['price']} Gold',
-                          style: const TextStyle(fontSize: 14, color: Colors.white70),
-                        ),
-                      ),
+  padding: const EdgeInsets.all(8.0),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Text(
+        '${item['price']}',
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.white70,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      const SizedBox(width: 5), // Κενό ανάμεσα στον αριθμό και την εικόνα
+      Image.asset(
+        'assets/images/gold_bar.png', // Διαδρομή της εικόνας
+        width: 16, // Πλάτος εικόνας
+        height: 16, // Ύψος εικόνας
+      ),
+    ],
+  ),
+),
+
                       ElevatedButton(
                         onPressed: isPurchased
                             ? null
