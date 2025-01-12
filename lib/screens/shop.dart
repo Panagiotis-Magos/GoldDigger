@@ -21,46 +21,44 @@ class _ShopScreenState extends State<ShopScreen> {
     _fetchData(); // Φόρτωση δεδομένων
   }
 
-Future<void> _fetchData() async {
-  try {
-    final db = await DatabaseService().database;
+  Future<void> _fetchData() async {
+    try {
+      final db = await DatabaseService().database;
 
-    // Ανάκτηση όλων των αντικειμένων μαζί με το αν έχουν αγοραστεί από τον χρήστη
-    final itemResults = await db.rawQuery('''
-      SELECT 
-        items.*,
-        photos.url AS image_url,
-        CASE 
-          WHEN useritems.item_id IS NOT NULL THEN 1 
-          ELSE 0 
-        END AS isPurchased
-      FROM items
-      LEFT JOIN photos ON items.photo_id = photos.photo_id
-      LEFT JOIN useritems ON items.item_id = useritems.item_id AND useritems.user_id = ?
-    ''', [widget.userId]);
+      // Ανάκτηση μόνο των items με type = 1 (accessories)
+      final itemResults = await db.rawQuery('''
+        SELECT 
+          items.*,
+          photos.url AS image_url,
+          CASE 
+            WHEN useritems.item_id IS NOT NULL THEN 1 
+            ELSE 0 
+          END AS isPurchased
+        FROM items
+        LEFT JOIN photos ON items.photo_id = photos.photo_id
+        LEFT JOIN useritems ON items.item_id = useritems.item_id AND useritems.user_id = ?
+        WHERE items.type = 1
+      ''', [widget.userId]);
 
-    // Ανάκτηση του χρυσού του χρήστη
-    final userResult = await db.query(
-      'users',
-      where: 'user_id = ?',
-      whereArgs: [widget.userId],
-    );
+      // Ανάκτηση του χρυσού του χρήστη
+      final userResult = await db.query(
+        'users',
+        where: 'user_id = ?',
+        whereArgs: [widget.userId],
+      );
 
-    setState(() {
-      items = itemResults;
-      userGold = userResult.isNotEmpty ? userResult.first['gold'] as int : 0;
-      isLoading = false;
-    });
-  } catch (e) {
-    print('Error fetching shop data: $e');
-    setState(() {
-      isLoading = false;
-    });
+      setState(() {
+        items = itemResults;
+        userGold = userResult.isNotEmpty ? userResult.first['gold'] as int : 0;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching shop data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
-}
-
-
-
 
   Future<void> _buyItem(int itemId, int price) async {
     try {
@@ -150,72 +148,68 @@ Future<void> _fetchData() async {
               ),
               itemCount: items.length,
               itemBuilder: (context, index) {
-  final item = items[index];
-  final imagePath = item['image_url'] ?? 'assets/images/default.png';
-  final isPurchased = (item['isPurchased'] as int) == 1; // Έλεγχος αν έχει αγοραστεί
+                final item = items[index];
+                final imagePath = item['image_url'] ?? 'assets/images/default.png';
+                final isPurchased = (item['isPurchased'] as int) == 1;
 
-  return Card(
-    color: Colors.grey[850],
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.cover,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            item['name'],
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            '${item['price']} Gold',
-            style: const TextStyle(fontSize: 14, color: Colors.white70),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: isPurchased
-              ? null // Αν έχει αγοραστεί, το κουμπί γίνεται ανενεργό
-              : () => _buyItem(
-                  item['item_id'] as int, item['price'] as int),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isPurchased ? Colors.grey : Colors.amber,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          child: Text(
-            isPurchased ? 'Purchased' : 'Buy',
-            style: TextStyle(
-              color: isPurchased ? Colors.white70 : Colors.black,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-},
-
-
-
+                return Card(
+                  color: Colors.grey[850],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Image.asset(
+                          imagePath,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          item['name'],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          '${item['price']} Gold',
+                          style: const TextStyle(fontSize: 14, color: Colors.white70),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: isPurchased
+                            ? null
+                            : () => _buyItem(item['item_id'] as int, item['price'] as int),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isPurchased ? Colors.grey : Colors.amber,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          isPurchased ? 'Purchased' : 'Buy',
+                          style: TextStyle(
+                            color: isPurchased ? Colors.white70 : Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
       ),
-     bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2, // shop is selected
         selectedItemColor: Colors.amber,
         unselectedItemColor: Colors.grey,
