@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import 'camerascreen.dart';
 
 class TaskDetailsScreen extends StatefulWidget {
-  final int userId; // ID του χρήστη
-  final int taskId; // ID του task
+  final int userId;
+  final int taskId;
 
   const TaskDetailsScreen({Key? key, required this.userId, required this.taskId})
       : super(key: key);
@@ -16,8 +17,9 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   Map<String, dynamic>? taskDetails;
   List<Map<String, dynamic>> relatedGoals = [];
   bool isLoading = true;
-  bool taskCompleted = false; // Κατάσταση ολοκλήρωσης του task
-  bool decidedNoPhoto = false; // Κατάσταση αν ο χρήστης αποφάσισε "No Photo"
+  bool taskCompleted = false; // Status: Task completed
+  bool decidedNoPhoto = false; // Status: User decided not to upload photo
+  bool decisionPending = true; // Status: Waiting for user's decision
 
   @override
   void initState() {
@@ -29,14 +31,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     try {
       final db = await DatabaseService().database;
 
-      // Ανάκτηση των λεπτομερειών του task
       final taskResult = await db.query(
         'tasks',
         where: 'task_id = ?',
         whereArgs: [widget.taskId],
       );
 
-      // Ανάκτηση της κατάστασης του task για τον χρήστη
       final userTaskResult = await db.query(
         'usertasks',
         where: 'user_id = ? AND task_id = ?',
@@ -49,6 +49,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             (userTaskResult.first['is_completed'] as int) == 1;
         decidedNoPhoto = userTaskResult.isNotEmpty &&
             (userTaskResult.first['photo_decision'] == 'no');
+        decisionPending = userTaskResult.isNotEmpty &&
+            (userTaskResult.first['photo_decision'] == null); // Pending decision
         isLoading = false;
       });
     } catch (e) {
@@ -63,7 +65,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     try {
       final db = await DatabaseService().database;
 
-      // Ενημέρωση της κατάστασης του task ως completed
       await db.update(
         'usertasks',
         {
@@ -74,7 +75,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         whereArgs: [widget.userId, widget.taskId],
       );
 
-      // Πρόσθεση των χρημάτων στον χρήστη
       final goldReward = taskDetails!['gold_reward'] as int;
       await db.rawUpdate('''
         UPDATE users
@@ -83,7 +83,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       ''', [goldReward, widget.userId]);
 
       setState(() {
-        taskCompleted = true; // Ενημερώνουμε την κατάσταση του task
+        taskCompleted = true;
+        decisionPending = true; // Now waiting for user's photo decision
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -101,7 +102,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     try {
       final db = await DatabaseService().database;
 
-      // Ενημέρωση της απόφασης του χρήστη στη βάση δεδομένων
       await db.update(
         'usertasks',
         {'photo_decision': uploadPhoto ? 'yes' : 'no'},
@@ -111,17 +111,27 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
       setState(() {
         decidedNoPhoto = !uploadPhoto;
+        decisionPending = false; // Decision made
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            uploadPhoto
-                ? 'You chose to upload a photo!'
-                : 'You decided not to upload a photo.',
+      if (uploadPhoto) {
+        final capturedImagePath = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CameraScreen(),
           ),
-        ),
-      );
+        );
+
+        if (capturedImagePath != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Photo captured: $capturedImagePath')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You decided not to upload a photo.')),
+        );
+      }
     } catch (e) {
       print('Error saving photo decision: $e');
     }
@@ -204,9 +214,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                 const Text(
                   'Status:',
                   style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.amber),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber,
+                  ),
                 ),
                 Text(
                   taskCompleted ? 'COMPLETED' : 'NOT COMPLETED',
@@ -220,51 +231,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             ),
             const SizedBox(height: 16),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Gold:',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.amber),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '${taskDetails!['gold_reward']}',
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                    const Icon(Icons.attach_money, color: Colors.amber),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
             const Spacer(),
 
-            if (decidedNoPhoto)
-              Column(
-                children: [
-                  const Text(
-                    'You decided not to upload a photo',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.amber),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  const Icon(Icons.sentiment_dissatisfied,
-                      size: 80, color: Colors.grey),
-                ],
-              )
-            else if (!taskCompleted)
+            // Render buttons based on task and decision states
+            if (!taskCompleted)
               ElevatedButton(
                 onPressed: _completeTask,
                 style: ElevatedButton.styleFrom(
@@ -277,27 +247,24 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                 child: const Text(
                   'COMPLETE TASK',
                   style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               )
-            else
+            else if (decisionPending)
               Column(
                 children: [
                   const Text(
-                    'Great! You completed the task!',
+                    'Do you want to upload a photo?',
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.amber),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber,
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Do you want to take a photo?',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -305,8 +272,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                         onPressed: () => _handlePhotoDecision(true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.amber,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 20),
                         ),
                         child: const Text('Yes'),
                       ),
@@ -314,13 +279,43 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                         onPressed: () => _handlePhotoDecision(false),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 20),
                         ),
                         child: const Text('No'),
                       ),
                     ],
                   ),
+                ],
+              )
+            else if (decidedNoPhoto)
+              Column(
+                children: [
+                  const Text(
+                    'You decided not to upload a photo.',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Icon(Icons.sentiment_dissatisfied,
+                      size: 80, color: Colors.grey),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  const Text(
+                    'Photo uploaded successfully!',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Icon(Icons.check_circle,
+                      size: 80, color: Colors.green),
                 ],
               ),
           ],
