@@ -7,6 +7,7 @@ import '../screens/profile.dart';
 import '../screens/mystuff.dart';
 import '../utils/appstate.dart';
 import '../screens/searchscreen.dart';
+import '../screens/home.dart';
 
 class AppRoutes {
   static const String intro = '/';
