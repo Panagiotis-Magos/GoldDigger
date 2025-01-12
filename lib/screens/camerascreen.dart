@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+
 import '../services/database_service.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -10,7 +11,7 @@ class CameraScreen extends StatefulWidget {
 
   const CameraScreen({Key? key, required this.userId, required this.taskId})
       : super(key: key);
-
+  
   @override
   _CameraScreenState createState() => _CameraScreenState();
 }
@@ -29,9 +30,11 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> initializeCamera() async {
     try {
+
       cameras = await availableCameras();
       controller = CameraController(cameras[0], ResolutionPreset.high);
       await controller!.initialize();
+
       setState(() {
         isCameraReady = true;
       });
@@ -50,12 +53,15 @@ class _CameraScreenState extends State<CameraScreen> {
     if (controller != null && controller!.value.isInitialized) {
       try {
         capturedImage = await controller!.takePicture();
+
         setState(() {}); // Refresh UI to show captured image
+
       } catch (e) {
         print('Error capturing photo: $e');
       }
     }
   }
+
 
   Future<void> _acceptPhoto() async {
     if (capturedImage == null) return;
@@ -96,18 +102,24 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     if (!isCameraReady || controller == null) {
       return Scaffold(
+
         body: Center(child: CircularProgressIndicator()),
+
       );
     }
 
     return Scaffold(
       appBar: AppBar(
+
         title: Text('Capture Task Image'),
+
         backgroundColor: Colors.amber,
       ),
       body: Column(
         children: [
+
           Expanded(flex: 4, child: CameraPreview(controller!)),
+
           if (capturedImage != null)
             Expanded(
               flex: 2,
@@ -123,6 +135,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     height: 200,
                     fit: BoxFit.cover,
                   ),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -146,6 +159,7 @@ class _CameraScreenState extends State<CameraScreen> {
               flex: 1,
               child: Center(
                 child: ElevatedButton(
+
                   onPressed: capturePhoto,
                   child: Text('Capture Photo'),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
@@ -157,3 +171,4 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 }
+

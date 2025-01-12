@@ -8,7 +8,9 @@ import '../screens/mystuff.dart';
 import '../utils/appstate.dart';
 import '../screens/searchscreen.dart';
 import '../screens/home.dart';
+
 import '../screens/gpsscreen.dart';
+
 
 class AppRoutes {
   static const String intro = '/';
@@ -19,8 +21,10 @@ class AppRoutes {
   static const String searchscreen = '/searchscreen';
   static const String shop = '/shop';
   static const String home = '/home';
+
   static const String gps  = '/gpsscreen';
   //static const String camera = '/camera';
+
 
   static final Map<String, WidgetBuilder> routes = {
     intro: (context) => IntroScreen(),
@@ -36,5 +40,6 @@ class AppRoutes {
         taskId: 0, // Default or dummy value if not set here
       ),
     //camera: (context) => CameraScreen(), // Add the CameraScreen route
+
   };
 }

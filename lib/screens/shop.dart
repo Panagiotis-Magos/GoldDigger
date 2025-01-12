@@ -40,6 +40,7 @@ class _ShopScreenState extends State<ShopScreen> {
         WHERE items.type = 1
       ''', [widget.userId]);
 
+
       // Ανάκτηση του χρυσού του χρήστη
       final userResult = await db.query(
         'users',
@@ -131,12 +132,14 @@ class _ShopScreenState extends State<ShopScreen> {
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),
+
                     const SizedBox(width: 8), // Μικρό κενό ανάμεσα στο κείμενο και την εικόνα
                     Image.asset(
                       'assets/images/gold_bar.png', // Διαδρομή της εικόνας
                       width: 24, // Πλάτος εικόνας
                       height: 24, // Ύψος εικόνας
                     ),
+
                   ],
                 ),
               ],
@@ -154,8 +157,10 @@ class _ShopScreenState extends State<ShopScreen> {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
+
                 final imagePath = item['image_url'] ?? 'assets/images/default.png';
                 final isPurchased = (item['isPurchased'] as int) == 1;
+
 
                 return Card(
                   color: Colors.grey[850],
@@ -167,7 +172,9 @@ class _ShopScreenState extends State<ShopScreen> {
                     children: [
                       Expanded(
                         child: Image.asset(
+
                           imagePath,
+
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -176,6 +183,7 @@ class _ShopScreenState extends State<ShopScreen> {
                         child: Text(
                           item['name'],
                           style: const TextStyle(
+
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -215,6 +223,7 @@ class _ShopScreenState extends State<ShopScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
+
                         child: Text(
                           isPurchased ? 'Purchased' : 'Buy',
                           style: TextStyle(
@@ -231,6 +240,7 @@ class _ShopScreenState extends State<ShopScreen> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+
         currentIndex: 2, // shop is selected
         selectedItemColor: Colors.amber,
         unselectedItemColor: Colors.grey,
@@ -254,4 +264,6 @@ class _ShopScreenState extends State<ShopScreen> {
       ),
     );
   }
+
 }
+

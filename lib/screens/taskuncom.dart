@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+
 import 'package:golddigger/screens/gpsscreen.dart';
+
 import '../services/database_service.dart';
 import 'camerascreen.dart';
 
 class TaskDetailsScreen extends StatefulWidget {
+
   final int userId; // ID of the user
   final int taskId; // ID of the task
+
 
   const TaskDetailsScreen({Key? key, required this.userId, required this.taskId})
       : super(key: key);
@@ -16,11 +20,13 @@ class TaskDetailsScreen extends StatefulWidget {
 
 class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   Map<String, dynamic>? taskDetails;
+
   List<Map<String, dynamic>> relatedGoals = []; // Goals the task contributes to
   bool isLoading = true;
   bool taskCompleted = false; // Task completion status
   bool decidedNoPhoto = false; // Whether the user decided not to upload a photo
   bool decisionPending = true; // Whether the user's decision is pending
+
 
   @override
   void initState() {
@@ -32,19 +38,24 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     try {
       final db = await DatabaseService().database;
 
+
       // Fetch task details
+
       final taskResult = await db.query(
         'tasks',
         where: 'task_id = ?',
         whereArgs: [widget.taskId],
       );
 
+
       // Fetch user's task status
+
       final userTaskResult = await db.query(
         'usertasks',
         where: 'user_id = ? AND task_id = ?',
         whereArgs: [widget.userId, widget.taskId],
       );
+
 
       // Fetch goals that the task contributes to
       final goalsResult = await db.rawQuery('''
@@ -54,6 +65,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         WHERE gt.task_id = ?
       ''', [widget.taskId]);
 
+
       setState(() {
         taskDetails = taskResult.isNotEmpty ? taskResult.first : null;
         taskCompleted = userTaskResult.isNotEmpty &&
@@ -61,12 +73,14 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         decidedNoPhoto = userTaskResult.isNotEmpty &&
             (userTaskResult.first['photo_decision'] == 'no');
         decisionPending = userTaskResult.isNotEmpty &&
+
             (userTaskResult.first['photo_decision'] == null);
         relatedGoals = goalsResult; // Store goals that the task contributes to
         isLoading = false;
       });
     } catch (e) {
       print('Error fetching task details or goals: $e');
+
       setState(() {
         isLoading = false;
       });
@@ -74,6 +88,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   }
 
   Future<void> _completeTask() async {
+
   // Navigate to the GPS screen with taskId and userId
   final locationVerified = await Navigator.push(
     context,
@@ -89,6 +104,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     try {
       // Update the task as completed
       final db = await DatabaseService().database;
+
       await db.update(
         'usertasks',
         {
@@ -98,6 +114,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         where: 'user_id = ? AND task_id = ?',
         whereArgs: [widget.userId, widget.taskId],
       );
+
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Task completed successfully!')),
@@ -112,6 +129,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             taskId: widget.taskId,
           ),
         ),
+
       );
     } catch (e) {
       print('Error completing task: $e');
@@ -119,6 +137,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         SnackBar(content: Text('Failed to complete task: $e')),
       );
     }
+
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Location verification failed.')),
@@ -141,14 +160,18 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
       setState(() {
         decidedNoPhoto = !uploadPhoto;
+
         decisionPending = false;
+
       });
 
       if (uploadPhoto) {
         final capturedImagePath = await Navigator.push(
           context,
           MaterialPageRoute(
+
             builder: (context) => CameraScreen(userId:widget.userId, taskId: widget.taskId),
+
           ),
         );
 
@@ -192,7 +215,9 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+
             // Task title and category
+
             Text(
               taskDetails!['title'],
               style: const TextStyle(
@@ -214,7 +239,9 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             ),
             const SizedBox(height: 16),
 
+
             // Task description
+
             Text(
               'Description',
               style: const TextStyle(
@@ -239,6 +266,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
 
             // Goals this task contributes to
             Text(
@@ -265,11 +293,14 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     ],
                   ),
                 )),
+
             const SizedBox(height: 16),
 
             const Spacer(),
 
+
             // Action buttons based on task and decision states
+
             if (!taskCompleted)
               ElevatedButton(
                 onPressed: _completeTask,
@@ -300,7 +331,9 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                       color: Colors.amber,
                     ),
                   ),
+
                   const SizedBox(height: 10),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [

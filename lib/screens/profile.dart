@@ -206,3 +206,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 }
+
+
+Widget _buildImage(String url) {
+  if (url.startsWith('assets')) {
+    // Load from assets
+    return Image.asset(url, fit: BoxFit.cover);
+  } else {
+    // Assume the file is stored locally (internal/external)
+    return Image.file(File(url), fit: BoxFit.cover);
+  }
+}
