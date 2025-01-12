@@ -65,6 +65,12 @@ flutter:
   assets:
     - assets/database/goaldigger_schema.sql
     - assets/images/gold_bar.png
+    - assets/images/blackcap.jpg
+    - assets/images/crown.jpg
+    - assets/images/fireglasses.jpg
+    - assets/images/heartglasses.jpg
+    - assets/images/yellowcap.jpg
+
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
