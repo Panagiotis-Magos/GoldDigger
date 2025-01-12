@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import 'taskuncom.dart'; // Import για τη σελίδα Task Details
+import 'goalpage.dart'; // Import για τη σελίδα Goal Details
 
 class SearchScreen extends StatefulWidget {
   final int userId;
@@ -39,9 +41,9 @@ class _SearchScreenState extends State<SearchScreen> {
       List<String> args = ['%$query%'];
 
       if (_filter == 'Tasks') {
-        sql = "SELECT * FROM tasks WHERE title LIKE ?";
+        sql = "SELECT 'Task' AS type, task_id AS id, title, category FROM tasks WHERE title LIKE ?";
       } else if (_filter == 'Goals') {
-        sql = "SELECT * FROM goals WHERE title LIKE ?";
+        sql = "SELECT 'Goal' AS type, goal_id AS id, title, category FROM goals WHERE title LIKE ?";
       } else {
         sql = """
           SELECT 'Task' AS type, task_id AS id, title, category
@@ -63,11 +65,42 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  void _navigateToDetail(Map<String, dynamic> item) {
+  void _navigateToDetail(Map<String, dynamic> item) async {
     if (item['type'] == 'Task') {
-      Navigator.pushNamed(context, '/taskdetail', arguments: {'taskId': item['id']});
+      final db = await DatabaseService().database;
+      final result = await db.query(
+        'usertasks',
+        where: 'user_id = ? AND task_id = ?',
+        whereArgs: [widget.userId, item['id']],
+      );
+
+      if (result.isNotEmpty && result.first['is_completed'] == 0) {
+        // Navigate to TaskDetailsScreen if the task is NOT completed
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TaskDetailsScreen(
+              userId: widget.userId,
+              taskId: item['id'],
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('This task is already completed!')),
+        );
+      }
     } else if (item['type'] == 'Goal') {
-      Navigator.pushNamed(context, '/goaldetail', arguments: {'goalId': item['id']});
+      // Navigate to GoalDetailsScreen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GoalDetailsScreen(
+            userId: widget.userId,
+            goalId: item['id'],
+          ),
+        ),
+      );
     }
   }
 
@@ -91,14 +124,14 @@ class _SearchScreenState extends State<SearchScreen> {
                 hintText: 'Search...',
                 prefixIcon: Icon(Icons.search, color: Colors.grey[300]),
                 filled: true,
-                fillColor: Colors.grey[850], // Darker color for better visibility
-                hintStyle: const TextStyle(color: Colors.grey), // Lighter hint text
+                fillColor: Colors.grey[850],
+                hintStyle: const TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
                 ),
               ),
-              style: const TextStyle(color: Colors.white), // White text for better contrast
+              style: const TextStyle(color: Colors.white),
             ),
           ),
 
