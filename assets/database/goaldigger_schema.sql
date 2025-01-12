@@ -165,7 +165,10 @@ VALUES
 ('Heart Glasses', 'Cute heart glasses.',1, 300, 4),
 ('Crown', 'A stunning crown.',1, 400, 5),
 ('Blue', 'a blue theme.',0,0,6),
-('pink', 'a pink theme.',0,0,7);
+('pink', 'a pink theme.',0,0,7),
+('Default accessory', 'default ac',1,0,8),
+('Default style', 'default st',0,0,9);
+
 
 
 
@@ -183,11 +186,14 @@ CREATE TABLE `photos` (
 
 INSERT INTO `photos` (`photo_id`, `url`)
 VALUES 
-(1, 'assets/images/yellowcap.jpg'),
-(2, 'assets/images/blackcap.jpg'),
-(3, 'assets/images/fireglasses.jpg'),
-(4, 'assets/images/heartglasses.jpg'),
-(5, 'assets/images/crown.jpg');
+(1, 'assets/images/yellowcap.png'),
+(2, 'assets/images/blackcap.png'),
+(3, 'assets/images/fireglasses.png'),
+(4, 'assets/images/heartglasses.png'),
+(5, 'assets/images/crown.png'),
+(8, 'assets/images/defaultac.png'),
+(9, 'assets/images/defaultstyle.png');
+
 
 
 -- Table: useritems
