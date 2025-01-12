@@ -25,8 +25,21 @@ class _ShopScreenState extends State<ShopScreen> {
     try {
       final db = await DatabaseService().database;
 
-      // Ανάκτηση όλων των αντικειμένων προς αγορά
-      final itemResults = await db.query('items');
+      // Ανάκτηση μόνο των items με type = 1 (accessories)
+      final itemResults = await db.rawQuery('''
+        SELECT 
+          items.*,
+          photos.url AS image_url,
+          CASE 
+            WHEN useritems.item_id IS NOT NULL THEN 1 
+            ELSE 0 
+          END AS isPurchased
+        FROM items
+        LEFT JOIN photos ON items.photo_id = photos.photo_id
+        LEFT JOIN useritems ON items.item_id = useritems.item_id AND useritems.user_id = ?
+        WHERE items.type = 1
+      ''', [widget.userId]);
+
 
       // Ανάκτηση του χρυσού του χρήστη
       final userResult = await db.query(
@@ -119,7 +132,14 @@ class _ShopScreenState extends State<ShopScreen> {
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                    const Icon(Icons.attach_money, color: Colors.black),
+
+                    const SizedBox(width: 8), // Μικρό κενό ανάμεσα στο κείμενο και την εικόνα
+                    Image.asset(
+                      'assets/images/gold_bar.png', // Διαδρομή της εικόνας
+                      width: 24, // Πλάτος εικόνας
+                      height: 24, // Ύψος εικόνας
+                    ),
+
                   ],
                 ),
               ],
@@ -137,6 +157,11 @@ class _ShopScreenState extends State<ShopScreen> {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
+
+                final imagePath = item['image_url'] ?? 'assets/images/default.png';
+                final isPurchased = (item['isPurchased'] as int) == 1;
+
+
                 return Card(
                   color: Colors.grey[850],
                   shape: RoundedRectangleBorder(
@@ -147,7 +172,9 @@ class _ShopScreenState extends State<ShopScreen> {
                     children: [
                       Expanded(
                         child: Image.asset(
-                          'assets/images/${item['name'].toLowerCase().replaceAll(" ", "_")}.png',
+
+                          imagePath,
+
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -156,31 +183,52 @@ class _ShopScreenState extends State<ShopScreen> {
                         child: Text(
                           item['name'],
                           style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
+
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '${item['price']} Gold',
-                          style: const TextStyle(
-                              fontSize: 14, color: Colors.white70),
-                        ),
-                      ),
+  padding: const EdgeInsets.all(8.0),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Text(
+        '${item['price']}',
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.white70,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      const SizedBox(width: 5), // Κενό ανάμεσα στον αριθμό και την εικόνα
+      Image.asset(
+        'assets/images/gold_bar.png', // Διαδρομή της εικόνας
+        width: 16, // Πλάτος εικόνας
+        height: 16, // Ύψος εικόνας
+      ),
+    ],
+  ),
+),
+
                       ElevatedButton(
-                        onPressed: () => _buyItem(
-                            item['item_id'] as int, item['price'] as int),
+                        onPressed: isPurchased
+                            ? null
+                            : () => _buyItem(item['item_id'] as int, item['price'] as int),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.amber,
+                          backgroundColor: isPurchased ? Colors.grey : Colors.amber,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
-                          'Buy',
-                          style: TextStyle(color: Colors.black),
+
+                        child: Text(
+                          isPurchased ? 'Purchased' : 'Buy',
+                          style: TextStyle(
+                            color: isPurchased ? Colors.white70 : Colors.black,
+                          ),
                         ),
                       ),
                     ],
@@ -191,7 +239,8 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
         ],
       ),
-     bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar(
+
         currentIndex: 2, // shop is selected
         selectedItemColor: Colors.amber,
         unselectedItemColor: Colors.grey,
@@ -215,4 +264,6 @@ class _ShopScreenState extends State<ShopScreen> {
       ),
     );
   }
+
 }
+

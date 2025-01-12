@@ -13,6 +13,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String? selectedAccessoryUrl;
+String? selectedStyleUrl;
+
   String username = '';
   int totalPoints = 0;
   List<String> libraryPhotos = [];
@@ -23,45 +26,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  Future<void> _loadUserData() async {
-    try {
-      final db = await DatabaseService().database;
+Future<void> _loadUserData() async {
+  try {
+    final db = await DatabaseService().database;
 
-      // Fetch user data
-      final userResult = await db.query(
-        'users',
-        where: 'user_id = ?',
-        whereArgs: [widget.userId],
-      );
+    // Fetch user data
+    final userResult = await db.query(
+      'users',
+      where: 'user_id = ?',
+      whereArgs: [widget.userId],
+    );
 
-      print('User result: $userResult'); // Debug: Check user query result
-
-      if (userResult.isNotEmpty) {
-        setState(() {
-          username = userResult[0]['username'] as String;
-          totalPoints = userResult[0]['gold'] as int;
-        });
-      } else {
-        print('No user found for userId: ${widget.userId}');
-      }
-
-      // Fetch user's photos
-      final photosResult = await db.query(
-        'photos',
-        where: 'user_id = ?',
-        whereArgs: [widget.userId],
-        orderBy: 'uploaded_at DESC', // Ensure the photos are sorted by upload date
-      );
-
-      print('Photos result: $photosResult'); // Debug: Check photos query result
-
+    if (userResult.isNotEmpty) {
       setState(() {
-        libraryPhotos = photosResult.map((photo) => photo['url'] as String).toList();
+        username = userResult[0]['username'] as String;
+        totalPoints = userResult[0]['gold'] as int;
       });
-    } catch (e) {
-      print('Error loading user data: $e');
     }
+
+    // Fetch user's photos
+    final photosResult = await db.query(
+      'photos',
+      where: 'user_id = ?',
+      whereArgs: [widget.userId],
+      orderBy: 'uploaded_at DESC',
+    );
+
+    setState(() {
+      libraryPhotos = photosResult.map((photo) => photo['url'] as String).toList();
+    });
+
+    // Fetch selected accessory
+    final accessoryResult = await db.rawQuery('''
+      SELECT photos.url
+      FROM useritems
+      INNER JOIN items ON useritems.item_id = items.item_id
+      INNER JOIN photos ON items.photo_id = photos.photo_id
+      WHERE useritems.user_id = ? AND useritems.is_equipped = 1 AND items.type = 1
+    ''', [widget.userId]);
+
+    // Fetch selected style
+    final styleResult = await db.rawQuery('''
+      SELECT photos.url
+      FROM useritems
+      INNER JOIN items ON useritems.item_id = items.item_id
+      INNER JOIN photos ON items.photo_id = photos.photo_id
+      WHERE useritems.user_id = ? AND useritems.is_equipped = 1 AND items.type = 0
+    ''', [widget.userId]);
+
+    // Ενημέρωση των τιμών με default εικόνες αν δεν υπάρχουν αποτελέσματα
+    setState(() {
+      selectedAccessoryUrl = accessoryResult.isNotEmpty
+          ? accessoryResult.first['url'] as String
+          : 'assets/images/defaultac.png';
+
+      selectedStyleUrl = styleResult.isNotEmpty
+          ? styleResult.first['url'] as String
+          : 'assets/images/defaultstyle.png';
+    });
+  } catch (e) {
+    print('Error loading user data: $e');
   }
+}
+
+
 
   void _navigateTo(String route) {
     Navigator.pushReplacementNamed(context, route);
@@ -84,11 +112,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Header Section
             Row(
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.grey[700],
-                  child: Icon(Icons.person, size: 40, color: Colors.white),
-                ),
+              Stack(
+  alignment: Alignment.center,
+  children: [
+    // Background style (αν υπάρχει επιλεγμένο)
+    if (selectedStyleUrl != null)
+      Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: AssetImage(selectedStyleUrl!),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    // Προφίλ χρήστη (avatar)
+    CircleAvatar(
+      radius: 40,
+      backgroundColor: Colors.grey[700],
+      child: Icon(Icons.person, size: 40, color: Colors.white),
+    ),
+    // Accessory (αν υπάρχει επιλεγμένο)
+    if (selectedAccessoryUrl != null)
+      Positioned(
+        bottom: -10,
+        child: Image.asset(
+          selectedAccessoryUrl!,
+          width: 40,
+          height: 40,
+        ),
+      ),
+  ],
+),
+
                 const SizedBox(width: 20),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,16 +262,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ? Image.file(file, fit: BoxFit.cover)
           : Icon(Icons.broken_image, color: Colors.grey); // Handle missing file
     }
-  }
-}
-
-
-Widget _buildImage(String url) {
-  if (url.startsWith('assets')) {
-    // Load from assets
-    return Image.asset(url, fit: BoxFit.cover);
-  } else {
-    // Assume the file is stored locally (internal/external)
-    return Image.file(File(url), fit: BoxFit.cover);
   }
 }

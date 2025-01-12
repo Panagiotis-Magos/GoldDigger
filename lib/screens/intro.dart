@@ -20,7 +20,7 @@ class IntroScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Image.asset(
-                'assets/logo.png', // Replace with your logo path
+                'assets/images/gold_bar.png', // Replace with your logo path
                 height: 150,
               ),
             ),
