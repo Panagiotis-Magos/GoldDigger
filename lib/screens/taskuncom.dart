@@ -329,4 +329,3 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 }
-
