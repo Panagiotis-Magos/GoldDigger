@@ -16,6 +16,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String searchscreen = '/searchscreen';
   static const String shop = '/shop';
+  static const String home = '/home';
 
   static final Map<String, WidgetBuilder> routes = {
     intro: (context) => IntroScreen(),
@@ -24,6 +25,7 @@ class AppRoutes {
     editprofile: (context) => EditProfileScreen(userId: AppState().globaluserId),
     mystuff: (context) => MyStuffScreen(userId: AppState().globaluserId),
     searchscreen: (context) => SearchScreen(userId: AppState().globaluserId),
+    home: (context) => HomeScreen(userId:AppState().globaluserId),
     shop: (context) => ShopScreen(userId: AppState().globaluserId)
   };
 }
