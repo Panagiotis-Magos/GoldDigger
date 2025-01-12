@@ -88,7 +88,7 @@ class LoginScreen extends StatelessWidget {
                     AppState().globaluserId = userId;
 
                     // Navigate to the profile screen
-                    Navigator.pushReplacementNamed(context, '/profile');
+                    Navigator.pushReplacementNamed(context, '/home');
                   } else {
                     // Show an error message if the email or password is incorrect
                     showDialog(
