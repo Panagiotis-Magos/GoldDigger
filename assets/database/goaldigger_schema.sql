@@ -152,18 +152,22 @@ CREATE TABLE `items` (
     `item_id` INTEGER PRIMARY KEY AUTOINCREMENT,
     `name` TEXT NOT NULL,
     `description` TEXT,
-    `type` TEXT,
+    `type` BOOLEAN,
     `price` INTEGER NOT NULL,
     `photo_id` INTEGER NOT NULL,
     FOREIGN KEY (`photo_id`) REFERENCES `photos` (`photo_id`) ON DELETE CASCADE
 );
 INSERT INTO `items` (`name`, `description`, `type`, `price`, `photo_id`)
 VALUES 
-('Yellow Cap', 'A stylish yellow cap.', 'Hat', 100, 1),
-('Black Cap', 'A trendy black cap.', 'Hat', 120, 2),
-('Fire Glasses', 'Hot fire glasses.', 'glasses', 200, 3),
-('Heart Glasses', 'Cute heart glasses.', 'glasses', 300, 4),
-('Crown', 'A stunning crown.', 'accessories', 400, 5);
+('Yellow Cap', 'A stylish yellow cap.',1, 100, 1),
+('Black Cap', 'A trendy black cap.',1, 120, 2),
+('Fire Glasses', 'Hot fire glasses.',1, 200, 3),
+('Heart Glasses', 'Cute heart glasses.',1, 300, 4),
+('Crown', 'A stunning crown.',1, 400, 5),
+('Blue', 'a blue theme.',0,0,6),
+('pink', 'a pink theme.',0,0,7);
+
+
 
 
 -- Table: photos
