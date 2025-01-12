@@ -161,9 +161,9 @@ INSERT INTO `items` (`name`, `description`, `type`, `price`, `photo_id`)
 VALUES 
 ('Yellow Cap', 'A stylish yellow cap.', 'Hat', 100, 1),
 ('Black Cap', 'A trendy black cap.', 'Hat', 120, 2),
-('Red Shirt', 'A comfortable red shirt.', 'Shirt', 200, 3),
-('Blue Jeans', 'Durable blue jeans.', 'Pants', 300, 4),
-('Sports Shoes', 'Comfortable running shoes.', 'Shoes', 400, 5);
+('Fire Glasses', 'Hot fire glasses.', 'glasses', 200, 3),
+('Heart Glasses', 'Cute heart glasses.', 'glasses', 300, 4),
+('Crown', 'A stunning crown.', 'accessories', 400, 5);
 
 
 -- Table: photos
@@ -179,11 +179,11 @@ CREATE TABLE `photos` (
 
 INSERT INTO `photos` (`photo_id`, `url`)
 VALUES 
-(1, 'assets/images/yellow_cap.png'),
-(2, 'assets/images/black_cap.png'),
-(3, 'assets/images/red_shirt.png'),
-(4, 'assets/images/blue_jeans.png'),
-(5, 'assets/images/sports_shoes.png');
+(1, 'assets/images/yellowcap.jpg'),
+(2, 'assets/images/blackcap.jpg'),
+(3, 'assets/images/fireglasses.jpg'),
+(4, 'assets/images/heartglasses.jpg'),
+(5, 'assets/images/crown.jpg');
 
 
 -- Table: useritems
