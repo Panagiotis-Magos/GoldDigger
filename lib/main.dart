@@ -20,7 +20,7 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   // Clear database for development/testing purposes
-  await clearDatabase();
+  //await clearDatabase();
   final dbService = DatabaseService();
   await dbService.database; // Ensure the database is initialized
   runApp(GoldDiggerApp());
@@ -33,7 +33,7 @@ class GoldDiggerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'GoldDigger',
       theme: AppTheme.lightTheme, // Apply custom theme
-      initialRoute: AppRoutes.camera,//Start with the Intro screen
+      initialRoute: AppRoutes.intro,//Start with the Intro screen
       routes: AppRoutes.routes, // Use centralized routes
     );
   }
