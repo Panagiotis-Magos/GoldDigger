@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
 import '../services/database_service.dart';
 
 class MyStuffScreen extends StatefulWidget {
@@ -25,29 +26,26 @@ class _MyStuffScreenState extends State<MyStuffScreen> {
     try {
       final db = await DatabaseService().database;
 
-      // Ανάκτηση των αξεσουάρ του χρήστη
+      // Ανάκτηση των Accessories του χρήστη
       final accessoryResults = await db.rawQuery('''
-        SELECT i.item_id, i.name, i.description, i.type, i.price, ui.is_equipped
+        SELECT i.item_id, i.name, i.description, i.type, ui.is_equipped
         FROM items i
         INNER JOIN useritems ui ON i.item_id = ui.item_id
-        WHERE ui.user_id = ?
+        WHERE ui.user_id = ? AND i.type = 1
       ''', [widget.userId]);
 
-      // Διαχωρισμός σε Accessories και Styles (με βάση τον τύπο)
-      final List<Map<String, dynamic>> accessoriesList = [];
-      final List<Map<String, dynamic>> stylesList = [];
-
-      for (var item in accessoryResults) {
-        if (item['type'] == 'accessory') {
-          accessoriesList.add(item);
-        } else if (item['type'] == 'style') {
-          stylesList.add(item);
-        }
-      }
+      // Ανάκτηση όλων των Styles
+      final styleResults = await db.rawQuery('''
+        SELECT i.item_id, i.name, i.description, i.type,
+          COALESCE(ui.is_equipped, 0) as is_equipped
+        FROM items i
+        LEFT JOIN useritems ui ON i.item_id = ui.item_id AND ui.user_id = ?
+        WHERE i.type = 0
+      ''', [widget.userId]);
 
       setState(() {
-        accessories = accessoriesList;
-        styles = stylesList;
+        accessories = accessoryResults;
+        styles = styleResults;
         isLoading = false;
       });
     } catch (e) {
@@ -55,6 +53,44 @@ class _MyStuffScreenState extends State<MyStuffScreen> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _equipItem(int itemId, String category) async {
+    try {
+      final db = await DatabaseService().database;
+
+      // Βεβαιωνόμαστε ότι υπάρχει εγγραφή για το item στον πίνακα useritems
+      await db.insert(
+        'useritems',
+        {
+          'user_id': widget.userId,
+          'item_id': itemId,
+          'is_equipped': 0,
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore, // Αγνοεί αν υπάρχει ήδη
+      );
+
+      // Απενεργοποίηση όλων των αντικειμένων της κατηγορίας
+      await db.update(
+        'useritems',
+        {'is_equipped': 0},
+        where: 'user_id = ? AND item_id IN (SELECT item_id FROM items WHERE type = ?)',
+        whereArgs: [widget.userId, category == 'Accessories' ? 1 : 0],
+      );
+
+      // Ενεργοποίηση του επιλεγμένου αντικειμένου
+      await db.update(
+        'useritems',
+        {'is_equipped': 1},
+        where: 'user_id = ? AND item_id = ?',
+        whereArgs: [widget.userId, itemId],
+      );
+
+      // Ανανέωση της λίστας
+      _fetchData();
+    } catch (e) {
+      print('Error equipping item: $e');
     }
   }
 
@@ -92,20 +128,13 @@ class _MyStuffScreenState extends State<MyStuffScreen> {
         return ListTile(
           title: Text(item['name']),
           subtitle: Text(item['description'] ?? ''),
-          trailing: Checkbox(
-            value: item['is_equipped'] == 1,
-            onChanged: (value) async {
-              final db = await DatabaseService().database;
-
-              // Ενημέρωση στη βάση για την επιλογή/απενεργοποίηση
-              await db.update(
-                'useritems',
-                {'is_equipped': value! ? 1 : 0},
-                where: 'user_id = ? AND item_id = ?',
-                whereArgs: [widget.userId, item['item_id']],
-              );
-
-              _fetchData(); // Ανανεώνει τα δεδομένα μετά την αλλαγή
+          trailing: Radio<bool>(
+            value: true,
+            groupValue: item['is_equipped'] == 1,
+            onChanged: (value) {
+              if (value == true) {
+                _equipItem(item['item_id'] as int, title); // Ενεργοποίηση του αντικειμένου
+              }
             },
           ),
         );
@@ -113,3 +142,5 @@ class _MyStuffScreenState extends State<MyStuffScreen> {
     );
   }
 }
+
+
