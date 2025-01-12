@@ -200,18 +200,21 @@ List<Map<String, dynamic>> get filterProgressData {
 
   if (selectedProgressCategory == 'Month') {
     // Filter for the last 4 weeks
-    //print(now);
+    print(now);
     final fourWeeksAgo = now.subtract(Duration(days: 28));
-    //print(fourWeeksAgo);
+    print(fourWeeksAgo);
     return processProgressData(progress.where((entry) {
       final dateStr = entry['completed_at'];
       if (dateStr == null) return false; // Skip null dates
       final date = DateTime.tryParse(dateStr);
+      bool check = date != null && date.isAfter(fourWeeksAgo) && date.isBefore(now);
+      print("$dateStr, $check");
       return date != null && date.isAfter(fourWeeksAgo) && date.isBefore(now);
     }).toList());
   } else if (selectedProgressCategory == 'Year') {
     // Filter for the last 52 weeks
     final oneYearAgo = now.subtract(Duration(days: 365));
+    print(oneYearAgo);
     return processProgressData(progress.where((entry) {
       final dateStr = entry['completed_at'];
       if (dateStr == null) return false; // Skip null dates
@@ -481,7 +484,7 @@ Widget _buildProgressGraph() {
               minY: 0,
               lineBarsData: [
                 LineChartBarData(
-                  isCurved: true,
+                  isCurved: false,
                   spots: filterProgressData
                       .map((point) => FlSpot(point['week'].toDouble(), point['count'].toDouble()))
                       .toList(),
@@ -506,12 +509,18 @@ Widget _buildProgressGraph() {
 List<Map<String, dynamic>> processProgressData(List<Map<String, dynamic>> progress) {
   // Parse the timestamps and count tasks per week
   Map<int, int> weeklyCounts = {};
-
+  DateTime earliest= DateTime.parse(progress[0]['completed_at']);
+  for (var entry in progress){
+    if (entry['completed_at'] != null) {
+      DateTime date = DateTime.parse(entry['completed_at']);
+      if(date.isBefore(earliest)){ earliest=date;}
+    }
+  }
   for (var entry in progress) {
     if (entry['completed_at'] != null) {
       // Convert completed_at to DateTime
       DateTime date = DateTime.parse(entry['completed_at']);
-      int week = _getWeekNumber(date);
+      int week = _getContinuousWeekNumber(date,earliest);
 
       // Increment the count for this week
       if (weeklyCounts.containsKey(week)) {
@@ -527,16 +536,19 @@ List<Map<String, dynamic>> graphData = [];
 weeklyCounts.forEach((week, count) {
   graphData.add({'week': week, 'count': count ?? 0}); // Use 0 if count is null
 });
+graphData.sort((a, b) => a['week'].compareTo(b['week']));
 
 //print(graphData);
   return graphData;
 }
 
 // Helper function to get the ISO week number
-int _getWeekNumber(DateTime date) {
-  final firstDayOfYear = DateTime(date.year, 1, 1);
-  final daysSinceFirstDay = date.difference(firstDayOfYear).inDays;
-  return (daysSinceFirstDay / 7).ceil() + 1;
+int _getContinuousWeekNumber(DateTime date, DateTime earliestDate) {
+  // Calculate the number of days between the current date and the earliest date
+  final daysSinceStart = date.difference(earliestDate).inDays;
+
+  // Convert days to weeks and add 1 to make it 1-based
+  return (daysSinceStart / 7).floor() + 1;
 }
 
 
@@ -599,7 +611,7 @@ Widget _buildProgressWithExpansion() {
         onCategorySelected: (category) {
           setState(() {
             selectedProgressCategory = category; // Update the selected filter
-            //print(filterProgressData);
+            print(filterProgressData);
           });
         },
       ),
