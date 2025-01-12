@@ -50,6 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'photos',
         where: 'user_id = ?',
         whereArgs: [widget.userId],
+        orderBy: 'uploaded_at DESC', // Ensure the photos are sorted by upload date
       );
 
       print('Photos result: $photosResult'); // Debug: Check photos query result
@@ -144,20 +145,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8.0,
-                  mainAxisSpacing: 8.0,
-                ),
-                itemCount: libraryPhotos.length,
-                itemBuilder: (context, index) {
-                  return Image.network(
-                    libraryPhotos[index],
-                    fit: BoxFit.cover,
-                  );
-                },
-              ),
+              child: libraryPhotos.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No photos available.',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    )
+                  : GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8.0,
+                        mainAxisSpacing: 8.0,
+                      ),
+                      itemCount: libraryPhotos.length,
+                      itemBuilder: (context, index) {
+                        return _buildImage(libraryPhotos[index]);
+                      },
+                    ),
             ),
           ],
         ),
@@ -187,15 +192,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-}
 
-
-Widget _buildImage(String url) {
-  if (url.startsWith('assets')) {
-    // Load from assets
-    return Image.asset(url, fit: BoxFit.cover);
-  } else {
-    // Assume the file is stored locally (internal/external)
-    return Image.file(File(url), fit: BoxFit.cover);
+  Widget _buildImage(String url) {
+    if (url.startsWith('assets')) {
+      // Load from assets
+      return Image.asset(url, fit: BoxFit.cover);
+    } else {
+      // Assume the file is stored locally (internal/external)
+      final file = File(url);
+      return file.existsSync()
+          ? Image.file(file, fit: BoxFit.cover)
+          : Icon(Icons.broken_image, color: Colors.grey); // Handle missing file
+    }
   }
 }
