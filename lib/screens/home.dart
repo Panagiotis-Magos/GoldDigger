@@ -187,6 +187,20 @@ List<Map<String, dynamic>> get filterProgressData {
           style: const TextStyle(color: Colors.yellow, fontSize: 18),
         ),
         centerTitle: true,
+        flexibleSpace: Stack(
+          children: [
+            Positioned(
+              top: 10, // Adjust vertical placement
+              right: 10, // Adjust horizontal placement
+              child: IconButton(
+                icon: Icon(Icons.account_circle, color: Colors.yellow, size: 30),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile'); // Navigate to profile page
+                },
+              ),
+            ),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -207,18 +221,26 @@ List<Map<String, dynamic>> get filterProgressData {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.grey[800],
-        selectedItemColor: Colors.yellow,
+        currentIndex: 1, // Search tab is selected
+        selectedItemColor: Colors.amber,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          if (index == 1) return; // Stay on Home
-          Navigator.pushReplacementNamed(context, ['/search', '/home', '/rewards'][index]);
+          switch (index) {
+            case 0:
+              Navigator.pushReplacementNamed(context, '/searchscreen');
+              break;
+            case 1:
+              //Navigator.pushReplacementNamed(context, '/home');
+              break;
+            case 2:
+              Navigator.pushReplacementNamed(context, '/shop');
+              break;
+          }
         },
-        currentIndex: 1,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Rewards'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
         ],
       ),
     );
