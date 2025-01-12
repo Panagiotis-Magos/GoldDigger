@@ -3,60 +3,28 @@ import '../services/database_service.dart';
 import '../utils/appstate.dart';
 
 class LoginScreen extends StatelessWidget {
+  // TextEditingController instances to store user input
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  Future<int?> getUserIdByEmail(String email, String password) async {
-    try {
-      final db = await DatabaseService().database;
-
-      // Query the database for the user by email
-      final result = await db.query(
-        'users',
-        columns: ['user_id', 'password'],
-        where: 'email = ?',
-        whereArgs: [email],
-      );
-
-      // Debug: Log query result
-      print('Query result for email $email: $result');
-
-      if (result.isNotEmpty) {
-        final String storedPassword = result.first['password'] as String;
-
-        // Debug: Log entered and stored passwords
-        print('Stored password: $storedPassword');
-        print('Entered password: $password');
-
-        if (storedPassword == password) {
-          return result.first['user_id'] as int;
-        } else {
-          print('Password does not match.');
-        }
-      } else {
-        print('No user found with email: $email');
-      }
-    } catch (e) {
-      print('Error during login verification: $e');
-    }
-
-    return null;
-  }
-
-  void _showErrorDialog(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Login Failed'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  // Function to get the user_id from the database based on the email
+  Future<int?> getUserIdByEmail(String email) async {
+    final db = await DatabaseService().database; // Use the singleton instance of DatabaseService
+    final result = await db.query(
+      'users',
+      columns: ['user_id', 'password'],
+      where: 'email = ?',
+      whereArgs: [email],
     );
+
+    if (result.isNotEmpty) {
+      // Check if the entered password matches
+      final String storedPassword = result.first['password'] as String;
+      if (storedPassword == passwordController.text) {
+        return result.first['user_id'] as int?;
+      }
+    }
+    return null; // Return null if no matching email or password is found
   }
 
   @override
@@ -71,7 +39,7 @@ class LoginScreen extends StatelessWidget {
             children: [
               // App Logo or Title
               Text(
-                'Goaldigger',
+                'Goldigger',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -111,25 +79,31 @@ class LoginScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () async {
                   final String email = emailController.text.trim();
-                  final String password = passwordController.text.trim();
 
-                  if (email.isEmpty || password.isEmpty) {
-                    _showErrorDialog(context, 'Please fill in all fields.');
-                    return;
-                  }
+                  // Check the user_id by email and password
+                  final int? userId = await getUserIdByEmail(email);
 
-                  try {
-                    final int? userId = await getUserIdByEmail(email, password);
+                  if (userId != null) {
+                    // Set userId globally in AppState
+                    AppState().globaluserId = userId;
 
-                    if (userId != null) {
-                      AppState().globaluserId = userId;
-                      Navigator.pushReplacementNamed(context, '/home');
-                    } else {
-                      _showErrorDialog(context, 'Invalid email or password.');
-                    }
-                  } catch (e) {
-                    print('Error during login: $e');
-                    _showErrorDialog(context, 'An unexpected error occurred.');
+                    // Navigate to the profile screen
+                    Navigator.pushReplacementNamed(context, '/profile');
+                  } else {
+                    // Show an error message if the email or password is incorrect
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Login Failed'),
+                        content: Text('Invalid email or password.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -155,4 +129,3 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-

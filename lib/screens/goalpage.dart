@@ -220,7 +220,7 @@ class _GoalDetailsScreenState extends State<GoalDetailsScreen> {
             ElevatedButton(
               onPressed: _toggleGoalSelection,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isSelected ? Colors.red : Colors.amber,
+                backgroundColor: isSelected ? const Color.fromARGB(255, 59, 31, 21) : Colors.amber,
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

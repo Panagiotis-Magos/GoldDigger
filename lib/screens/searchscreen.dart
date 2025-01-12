@@ -52,6 +52,7 @@ class _SearchScreenState extends State<SearchScreen> {
           SELECT 'Goal' AS type, goal_id AS id, title, category
           FROM goals WHERE title LIKE ?
         """;
+  bool decidedNoPhoto = false; // Νέα μεταβλητή για την επιλογή "No Photo"
         args = ['%$query%', '%$query%'];
       }
 
@@ -73,8 +74,29 @@ class _SearchScreenState extends State<SearchScreen> {
         where: 'user_id = ? AND task_id = ?',
         whereArgs: [widget.userId, item['id']],
       );
+      if (result.isEmpty) {
+        // If the task is not in the usertasks table, insert it
+        await db.insert(
+          'usertasks',
+          {
+            'user_id': widget.userId,
+            'task_id': item['id'],
+            'is_completed': 0,
+            'completed_at': null,
+          },
+        );
 
-      if (result.isNotEmpty && result.first['is_completed'] == 0) {
+        // Navigate to the TaskDetailsScreen for incomplete tasks
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TaskDetailsScreen(
+              userId: widget.userId,
+              taskId: item['id'],
+            ),
+          ),
+        );
+      } else if (result.first['is_completed'] == 0) {
         // Navigate to TaskDetailsScreen if the task is NOT completed
         Navigator.push(
           context,
@@ -86,8 +108,14 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('This task is already completed!')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TaskDetailsScreen(
+              userId: widget.userId,
+              taskId: item['id'],
+            ),
+          ),
         );
       }
     } else if (item['type'] == 'Goal') {
