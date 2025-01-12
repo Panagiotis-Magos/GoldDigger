@@ -27,7 +27,7 @@ class IntroScreen extends StatelessWidget {
 
             // Welcome Text
             const Text(
-              'Welcome to Goldigger',
+              'Welcome to Goaldigger',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -42,7 +42,7 @@ class IntroScreen extends StatelessWidget {
             const Text(
               'Achieve your goals, complete tasks, and explore the world!',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 color: Colors.white70,
               ),
               textAlign: TextAlign.center,

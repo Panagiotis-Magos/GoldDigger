@@ -167,14 +167,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onTap: (index) {
           switch (index) {
             case 0:
-              _navigateTo('/search');
+              _navigateTo('/searchscreen');
               break;
             case 1:
               _navigateTo('/home');
               break;
             case 2:
-              break;
-            case 3:
               _navigateTo('/shop');
               break;
           }
