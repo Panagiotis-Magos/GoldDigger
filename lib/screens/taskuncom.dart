@@ -16,8 +16,9 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   Map<String, dynamic>? taskDetails;
   List<Map<String, dynamic>> relatedGoals = [];
   bool isLoading = true;
-  bool taskCompleted = false; // Νέα μεταβλητή για την κατάσταση ολοκλήρωσης
-  bool decidedNoPhoto = false; // Νέα μεταβλητή για την επιλογή "No Photo"
+  bool taskCompleted = false; // Κατάσταση ολοκλήρωσης του task
+  bool decidedNoPhoto = false; // Κατάσταση αν ο χρήστης αποφάσισε "No Photo"
+
   @override
   void initState() {
     super.initState();
@@ -35,17 +36,19 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         whereArgs: [widget.taskId],
       );
 
-      // Ανάκτηση των στόχων στους οποίους συνεισφέρει το task
-      final goalsResult = await db.rawQuery('''
-        SELECT goals.title 
-        FROM goaltask 
-        INNER JOIN goals ON goaltask.goal_id = goals.goal_id
-        WHERE goaltask.task_id = ?
-      ''', [widget.taskId]);
+      // Ανάκτηση της κατάστασης του task για τον χρήστη
+      final userTaskResult = await db.query(
+        'usertasks',
+        where: 'user_id = ? AND task_id = ?',
+        whereArgs: [widget.userId, widget.taskId],
+      );
 
       setState(() {
         taskDetails = taskResult.isNotEmpty ? taskResult.first : null;
-        relatedGoals = goalsResult;
+        taskCompleted = userTaskResult.isNotEmpty &&
+            (userTaskResult.first['is_completed'] as int) == 1;
+        decidedNoPhoto = userTaskResult.isNotEmpty &&
+            (userTaskResult.first['photo_decision'] == 'no');
         isLoading = false;
       });
     } catch (e) {
@@ -79,9 +82,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         WHERE user_id = ?
       ''', [goldReward, widget.userId]);
 
-      // Fetch updated task details from the database
-      await _fetchTaskDetails();
-
       setState(() {
         taskCompleted = true; // Ενημερώνουμε την κατάσταση του task
       });
@@ -97,16 +97,33 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     }
   }
 
-  void _handlePhotoDecision(bool uploadPhoto) {
-    if (uploadPhoto) {
-      Navigator.pushNamed(context, '/uploadPhoto', arguments: {
-        'userId': widget.userId,
-        'taskId': widget.taskId,
-      });
-    } else {
+  Future<void> _handlePhotoDecision(bool uploadPhoto) async {
+    try {
+      final db = await DatabaseService().database;
+
+      // Ενημέρωση της απόφασης του χρήστη στη βάση δεδομένων
+      await db.update(
+        'usertasks',
+        {'photo_decision': uploadPhoto ? 'yes' : 'no'},
+        where: 'user_id = ? AND task_id = ?',
+        whereArgs: [widget.userId, widget.taskId],
+      );
+
       setState(() {
-        decidedNoPhoto = true; // Ο χρήστης αποφάσισε να μην ανεβάσει φωτογραφία
+        decidedNoPhoto = !uploadPhoto;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            uploadPhoto
+                ? 'You chose to upload a photo!'
+                : 'You decided not to upload a photo.',
+          ),
+        ),
+      );
+    } catch (e) {
+      print('Error saving photo decision: $e');
     }
   }
 
@@ -186,7 +203,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
               children: [
                 const Text(
                   'Status:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber),
                 ),
                 Text(
                   taskCompleted ? 'COMPLETED' : 'NOT COMPLETED',
@@ -205,13 +225,19 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
               children: [
                 const Text(
                   'Gold:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber),
                 ),
                 Row(
                   children: [
                     Text(
                       '${taskDetails!['gold_reward']}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                     const Icon(Icons.attach_money, color: Colors.amber),
                   ],
@@ -220,24 +246,25 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             ),
             const SizedBox(height: 16),
 
-            const Text(
-              'Counts towards:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
-            ),
-            const SizedBox(height: 8),
-            ...relatedGoals.map((goal) => Row(
-                  children: [
-                    const Icon(Icons.check, color: Colors.amber),
-                    const SizedBox(width: 8),
-                    Text(
-                      goal['title'],
-                      style: const TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ],
-                )),
             const Spacer(),
 
-            if (!taskCompleted && !decidedNoPhoto)
+            if (decidedNoPhoto)
+              Column(
+                children: [
+                  const Text(
+                    'You decided not to upload a photo',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  const Icon(Icons.sentiment_dissatisfied,
+                      size: 80, color: Colors.grey),
+                ],
+              )
+            else if (!taskCompleted)
               ElevatedButton(
                 onPressed: _completeTask,
                 style: ElevatedButton.styleFrom(
@@ -249,16 +276,21 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                 ),
                 child: const Text(
                   'COMPLETE TASK',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
                 ),
-              ),
-
-            if (taskCompleted && !decidedNoPhoto)
+              )
+            else
               Column(
                 children: [
                   const Text(
                     'Great! You completed the task!',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber),
                   ),
                   const SizedBox(height: 10),
                   const Text(
@@ -273,7 +305,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                         onPressed: () => _handlePhotoDecision(true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.amber,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
                         ),
                         child: const Text('Yes'),
                       ),
@@ -281,25 +314,13 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                         onPressed: () => _handlePhotoDecision(false),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
                         ),
                         child: const Text('No'),
                       ),
                     ],
                   ),
-                ],
-              ),
-
-            if (decidedNoPhoto)
-              Column(
-                children: [
-                  const Text(
-                    'You decided not to upload a photo',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  const Icon(Icons.sentiment_dissatisfied, size: 80, color: Colors.grey),
                 ],
               ),
           ],
@@ -308,3 +329,4 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 }
+
