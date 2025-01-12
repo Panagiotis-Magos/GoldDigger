@@ -184,16 +184,16 @@ List<Map<String, dynamic>> get filterProgressData {
         backgroundColor: Colors.grey[800],
         title: Text(
           '@$username',
-          style: const TextStyle(color: Colors.yellow, fontSize: 18),
+          style: const TextStyle(color: Colors.yellow, fontSize: 25),
         ),
         centerTitle: true,
         flexibleSpace: Stack(
           children: [
             Positioned(
-              top: 10, // Adjust vertical placement
-              right: 10, // Adjust horizontal placement
+              top: 40, // Adjust vertical placement
+              right: 265, // Adjust horizontal placement
               child: IconButton(
-                icon: Icon(Icons.account_circle, color: Colors.yellow, size: 30),
+                icon: Icon(Icons.account_circle, color: Colors.yellow, size: 50),
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile'); // Navigate to profile page
                 },
